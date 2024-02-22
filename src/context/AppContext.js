@@ -30,6 +30,32 @@ export const AppReducer = (state, action) => {
                     ...state
                 }
             }
+        case 'DECREASE_EXPENSE':
+            let total = 0;
+            total = state.expenses.reduce(
+                (previousExp, currentExp) => {
+                    return previousExp + currentExp.cost
+                }, 0
+            );
+            total = total - action.payload.cost;
+            action.type = "DONE";
+            if (total <= state.budget) {
+                total = 0;
+                state.expenses.map((currentExp) => {
+                    if (currentExp.name === action.payload.name) {
+                        currentExp.cost = currentExp.cost - action.payload.cost;
+                    }
+                    return currentExp
+                });
+                return {
+                    ...state,
+                };
+            } else {
+                alert("Cannot decrease the allocation!");
+                return {
+                    ...state
+                }
+            }
         case 'RED_EXPENSE':
             const red_expenses = state.expenses.map((currentExp) => {
                 if (currentExp.name === action.payload.name && currentExp.cost - action.payload.cost >= 0) {
@@ -58,12 +84,20 @@ export const AppReducer = (state, action) => {
                 budget
             };
         case 'SET_BUDGET':
-            action.type = "DONE";
-            state.budget = action.payload;
+            const totalExpenses = state.expenses.reduce((total, expense) => total + expense.cost, 0);
 
-            return {
-                ...state,
-            };
+            // Check if the new budget is lower than total expenses
+            if (action.payload < totalExpenses) {
+                alert("You cannot reduce the budget value lower than the spending");
+                return state; // Return current state without changes
+            } else {
+                // If validation passes, update the budget
+                return {
+                    ...state,
+                    budget: action.payload, // Assuming action.payload is the new budget value directly
+                };
+            }
+
         case 'CHG_CURRENCY':
             action.type = "DONE";
             state.currency = action.payload;
@@ -86,7 +120,12 @@ const initialState = {
         { id: "Human Resource", name: 'Human Resource', cost: 40 },
         { id: "IT", name: 'IT', cost: 500 },
     ],
-    currency: '£'
+    currency: [
+        { id: "dollar", sign: '$' },
+        { id: "pound", sign: '£' },
+        { id: "euro", sign: '€' },
+        { id: "ruppee", sign: '₹' },
+    ]
 };
 
 // 2. Creates the context this is the thing our components import and use to get the state
